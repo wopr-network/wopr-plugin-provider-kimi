@@ -1,0 +1,38 @@
+{
+  "name": "wopr-plugin-provider-kimi",
+  "version": "1.0.0",
+  "description": "Moonshot AI Kimi Code CLI provider plugin for WOPR",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "wopr",
+    "wopr-plugin",
+    "provider",
+    "kimi",
+    "moonshot",
+    "kimi-code"
+  ],
+  "author": "",
+  "license": "MIT",
+  "peerDependencies": {
+    "wopr": "^0.0.1"
+  },
+  "dependencies": {
+    "@moonshot-ai/kimi-agent-sdk": "^0.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^18.0.0",
+    "typescript": "^5.0.0"
+  },
+  "wopr": {
+    "plugin": {
+      "name": "provider-kimi",
+      "category": "provider",
+      "description": "Moonshot AI Kimi Code CLI agent SDK for coding tasks"
+    }
+  }
+}
