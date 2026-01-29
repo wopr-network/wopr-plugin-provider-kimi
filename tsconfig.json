@@ -7,7 +7,12 @@
     "strict": true,
     "skipLibCheck": true,
     "declaration": true,
-    "outDir": "."
+    "outDir": "./dist",
+    "rootDir": ".",
+    "paths": {
+      "wopr/dist/types/provider.js": ["/tmp/wopr/dist/types/provider.d.ts"],
+      "wopr/dist/types.js": ["/tmp/wopr/dist/types.d.ts"]
+    }
   },
-  "files": ["index.ts"]
+  "include": ["./*.ts"]
 }
