@@ -1,37 +1,49 @@
 {
-  "name": "wopr-plugin-provider-kimi",
-  "version": "1.6.0",
-  "description": "Kimi provider with auto-installation (requires Python 3.12+)",
-  "main": "dist/index.js",
-  "type": "module",
-  "scripts": {
-    "build": "tsc",
-    "prepublishOnly": "npm run build",
-    "postinstall": "node install-deps.mjs"
-  },
-  "engines": {
-    "node": ">=18.0.0"
-  },
-  "wopr": {
-    "plugin": {
-      "name": "provider-kimi",
-      "category": "provider",
-      "description": "Moonshot AI Kimi Code CLI - auto-installs Python 3.12, uv, and kimi-cli"
-    },
-    "systemDependencies": {
-      "python": ">=3.12",
-      "note": "Will auto-install via uv if missing"
-    }
-  },
-  "keywords": ["wopr", "wopr-plugin", "provider", "kimi"],
-  "license": "MIT",
-  "peerDependencies": { "wopr": "^0.0.1" },
   "dependencies": {
     "@moonshot-ai/kimi-agent-sdk": "^0.0.5",
     "winston": "^3.19.0"
   },
+  "description": "Kimi provider with auto-installation (requires Python 3.12+)",
   "devDependencies": {
+    "@biomejs/biome": "^2.3.14",
     "@types/node": "^18.0.0",
     "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "wopr",
+    "wopr-plugin",
+    "provider",
+    "kimi"
+  ],
+  "license": "MIT",
+  "main": "dist/index.js",
+  "name": "wopr-plugin-provider-kimi",
+  "peerDependencies": {
+    "wopr": "^0.0.1"
+  },
+  "scripts": {
+    "build": "tsc",
+    "check": "biome check src/ && tsc --noEmit",
+    "format": "biome format --write src/",
+    "lint": "biome check src/",
+    "lint:fix": "biome check --fix src/",
+    "postinstall": "node install-deps.mjs",
+    "prepublishOnly": "npm run build"
+  },
+  "type": "module",
+  "version": "1.6.0",
+  "wopr": {
+    "plugin": {
+      "category": "provider",
+      "description": "Moonshot AI Kimi Code CLI - auto-installs Python 3.12, uv, and kimi-cli",
+      "name": "provider-kimi"
+    },
+    "systemDependencies": {
+      "note": "Will auto-install via uv if missing",
+      "python": ">=3.12"
+    }
   }
 }
