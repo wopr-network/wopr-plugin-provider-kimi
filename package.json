@@ -20,7 +20,7 @@
   ],
   "license": "MIT",
   "main": "dist/index.js",
-  "name": "wopr-plugin-provider-kimi",
+  "name": "@wopr-network/wopr-plugin-provider-kimi",
   "peerDependencies": {
     "wopr": "^0.0.1"
   },
@@ -45,5 +45,11 @@
       "note": "Will auto-install via uv if missing",
       "python": ">=3.12"
     }
-  }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist"
+  ]
 }
