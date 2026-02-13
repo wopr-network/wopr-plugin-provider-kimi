@@ -10,31 +10,16 @@ import winston from "winston";
 import { homedir } from "os";
 import { join } from "path";
 import { existsSync } from "fs";
+import type {
+  A2AServerConfig,
+  ConfigSchema,
+  PluginManifest,
+  WOPRPlugin,
+  WOPRPluginContext,
+} from "@wopr-network/plugin-types";
 
-// Type definitions (peer dependency from wopr)
-interface A2AToolResult {
-  content: Array<{
-    type: "text" | "image" | "resource";
-    text?: string;
-    data?: string;
-    mimeType?: string;
-  }>;
-  isError?: boolean;
-}
-
-interface A2AToolDefinition {
-  name: string;
-  description: string;
-  inputSchema: Record<string, unknown>;
-  handler: (args: Record<string, unknown>) => Promise<A2AToolResult>;
-}
-
-interface A2AServerConfig {
-  name: string;
-  version?: string;
-  tools: A2AToolDefinition[];
-}
-
+// Provider-specific types (not part of plugin-types — these are runtime interfaces
+// between WOPR core and provider plugins, not yet standardized in plugin-types)
 interface ModelQueryOptions {
   prompt: string;
   systemPrompt?: string;
@@ -65,37 +50,6 @@ interface ModelProvider {
   validateCredentials(credentials: string): Promise<boolean>;
   createClient(credential: string, options?: Record<string, unknown>): Promise<ModelClient>;
   getCredentialType(): "api-key" | "oauth" | "custom";
-}
-
-interface ConfigField {
-  name: string;
-  type: string;
-  label: string;
-  placeholder?: string;
-  required?: boolean;
-  description?: string;
-  options?: Array<{ value: string; label: string }>;
-  default?: unknown;
-}
-
-interface ConfigSchema {
-  title: string;
-  description: string;
-  fields: ConfigField[];
-}
-
-interface WOPRPluginContext {
-  log: { info: (msg: string) => void };
-  registerProvider: (provider: ModelProvider) => void;
-  registerConfigSchema: (name: string, schema: ConfigSchema) => void;
-}
-
-interface WOPRPlugin {
-  name: string;
-  version: string;
-  description: string;
-  init(ctx: WOPRPluginContext): Promise<void>;
-  shutdown(): Promise<void>;
 }
 
 // Setup winston logger
@@ -272,33 +226,71 @@ class KimiClient implements ModelClient {
 }
 
 /**
+ * Plugin manifest for WaaS discovery and auto-configuration.
+ */
+const manifest: PluginManifest = {
+  name: "@wopr-network/wopr-plugin-provider-kimi",
+  version: "1.6.0",
+  description: "Moonshot AI Kimi Code CLI provider with OAuth and A2A/MCP support",
+  author: "wopr-network",
+  license: "MIT",
+  repository: "https://github.com/wopr-network/wopr-plugin-provider-kimi",
+  capabilities: ["provider"],
+  category: "ai-provider",
+  tags: ["kimi", "moonshot", "oauth", "a2a", "mcp"],
+  icon: "🌙",
+  requires: {
+    bins: ["kimi"],
+    os: ["linux", "darwin"],
+    network: { outbound: true },
+  },
+  install: [
+    { kind: "pip", package: "kimi-cli", bins: ["kimi"], label: "Kimi CLI (via uv/pip)" },
+  ],
+  configSchema: {
+    title: "Kimi",
+    description: "Configure Moonshot AI Kimi settings",
+    fields: [
+      {
+        name: "kimiPath",
+        type: "text",
+        label: "Kimi CLI Path",
+        placeholder: "kimi (or full path)",
+        required: false,
+        description: "Path to Kimi CLI executable (defaults to 'kimi')",
+        setupFlow: "none",
+      },
+    ],
+  },
+  setup: [
+    {
+      id: "kimi-oauth",
+      title: "Kimi OAuth Login",
+      description: "Authenticate with Moonshot AI via `kimi auth login`. The CLI handles OAuth automatically.",
+      optional: false,
+    },
+  ],
+  lifecycle: {
+    shutdownBehavior: "graceful",
+  },
+};
+
+/**
  * Plugin export
  */
 const plugin: WOPRPlugin = {
   name: "provider-kimi",
-  version: "1.6.0", // Bumped for A2A support
+  version: "1.6.0",
   description: "Moonshot AI Kimi Code CLI provider with A2A/MCP support",
+  manifest,
 
   async init(ctx: WOPRPluginContext) {
     ctx.log.info("Registering Kimi provider (OAuth)...");
     ctx.registerProvider(kimiProvider);
     ctx.log.info("Kimi provider registered (supports session resumption, yoloMode, A2A/MCP)");
 
-    // Register config schema for UI
-    ctx.registerConfigSchema("provider-kimi", {
-      title: "Kimi",
-      description: "Configure Moonshot AI Kimi settings",
-      fields: [
-        {
-          name: "kimiPath",
-          type: "text",
-          label: "Kimi CLI Path",
-          placeholder: "kimi (or full path)",
-          required: false,
-          description: "Path to Kimi CLI executable (defaults to 'kimi')",
-        },
-      ],
-    });
+    // Register config schema for UI (also available via manifest.configSchema)
+    ctx.registerConfigSchema("provider-kimi", manifest.configSchema!);
     ctx.log.info("Registered Kimi config schema");
   },
 
