@@ -91,9 +91,22 @@ describe("provider interface", () => {
 
   describe("validateCredentials", () => {
     it("returns false when SDK is unavailable", async () => {
-      // loadSDK will fail because the mock SDK path doesn't exist
-      const result = await provider.validateCredentials("any-credential");
+      vi.doMock("@moonshot-ai/kimi-agent-sdk", () => {
+        throw new Error("Cannot find module");
+      });
+      // Re-import to pick up the mock
+      const mod = await import("../index.js");
+      const plugin = mod.default;
+      const ctx = {
+        log: { info: vi.fn() },
+        registerProvider: vi.fn(),
+        registerConfigSchema: vi.fn(),
+      };
+      await plugin.init(ctx);
+      const p = ctx.registerProvider.mock.calls[0][0];
+      const result = await p.validateCredentials("any-credential");
       expect(result).toBe(false);
+      vi.doUnmock("@moonshot-ai/kimi-agent-sdk");
     });
   });
 });
