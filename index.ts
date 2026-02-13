@@ -120,7 +120,7 @@ function getKimiPath(): string {
 }
 
 async function loadSDK(): Promise<any> {
-  return await import("/tmp/wopr-test/plugins/wopr-plugin-provider-kimi/node_modules/@moonshot-ai/kimi-agent-sdk/dist/index.mjs");
+  return await import("@moonshot-ai/kimi-agent-sdk");
 }
 
 /**
