@@ -109,8 +109,8 @@ const KIMI_MODEL_INFO = [
 	{
 		id: "kimi-k2",
 		name: "Kimi K2",
-		contextWindow: "128K",
-		maxOutput: "8K",
+		contextWindow: 128000,
+		maxOutput: 8000,
 		legacy: false,
 	},
 ];
