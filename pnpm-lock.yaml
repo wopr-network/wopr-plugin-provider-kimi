@@ -11,6 +11,9 @@ importers:
       '@moonshot-ai/kimi-agent-sdk':
         specifier: ^0.1.4
         version: 0.1.4(zod@3.25.76)
+      '@wopr-network/plugin-types':
+        specifier: ^0.2.0
+        version: 0.2.1(zod@3.25.76)
       winston:
         specifier: ^3.19.0
         version: 3.19.0
@@ -24,9 +27,6 @@ importers:
       '@types/node':
         specifier: ^25.2.3
         version: 25.2.3
-      '@wopr-network/plugin-types':
-        specifier: ^0.2.1
-        version: 0.2.1(zod@3.25.76)
       typescript:
         specifier: ^5.0.0
         version: 5.9.3
