@@ -104,6 +104,17 @@ function convertA2AToKimiMcpConfig(
 	return mcpServers;
 }
 
+// Static model metadata for extension enrichment (WOP-268)
+const KIMI_MODEL_INFO = [
+	{
+		id: "kimi-k2",
+		name: "Kimi K2",
+		contextWindow: 128000,
+		maxOutput: 8000,
+		legacy: false,
+	},
+];
+
 /**
  * Kimi provider implementation
  */
@@ -316,6 +327,14 @@ const plugin: WOPRPlugin = {
 		ctx.log.info(
 			"Kimi provider registered (supports session resumption, yoloMode, A2A/MCP)",
 		);
+
+		// Register extension for daemon model endpoint enrichment (WOP-268)
+		if (ctx.registerExtension) {
+			ctx.registerExtension("provider-kimi", {
+				getModelInfo: async () => KIMI_MODEL_INFO,
+			});
+			ctx.log.info("Registered provider-kimi extension");
+		}
 
 		// Register config schema for UI (also available via manifest.configSchema)
 		ctx.registerConfigSchema("provider-kimi", manifest.configSchema!);
