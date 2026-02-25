@@ -264,6 +264,11 @@ class KimiClient implements ModelClient {
 			for (let attempt = 0; attempt <= maxRetries; attempt++) {
 				try {
 					const turn = session.prompt(promptText);
+					// NOTE: Mid-stream retry hazard — if session.prompt() yields partial
+					// events before throwing, the caller has already received those partial
+					// events and they cannot be un-sent. Retries here apply only to
+					// complete-failure scenarios (network errors before or during the stream).
+					// This is a known limitation of streaming retry.
 					for await (const event of turn) {
 						if (
 							event.type === "ContentPart" &&
