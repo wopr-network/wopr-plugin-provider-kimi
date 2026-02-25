@@ -36,7 +36,7 @@ describe("config validation", () => {
 
     const ctx = {
       log: { info: vi.fn() },
-      registerProvider: vi.fn(),
+      registerLLMProvider: vi.fn(),
       registerConfigSchema: vi.fn(),
     };
 

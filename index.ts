@@ -68,6 +68,50 @@ const logger = winston.createLogger({
 
 const KIMI_PATH = join(homedir(), ".local/share/uv/tools/kimi-cli/bin/kimi");
 
+interface RetryOptions {
+	maxRetries?: number;
+	baseDelayMs?: number;
+	retryableStatusCodes?: number[];
+}
+
+export async function retryWithBackoff<T>(
+	fn: () => Promise<T>,
+	opts: RetryOptions = {},
+	logger: { warn: (msg: string) => void },
+): Promise<T> {
+	const maxRetries = opts.maxRetries ?? 3;
+	const baseDelayMs = opts.baseDelayMs ?? 1000;
+	const retryableCodes = opts.retryableStatusCodes ?? [429, 503];
+
+	for (let attempt = 0; attempt <= maxRetries; attempt++) {
+		try {
+			return await fn();
+		} catch (error: unknown) {
+			if (attempt === maxRetries) throw error;
+
+			const msg = error instanceof Error ? error.message : String(error);
+			const status = (error as any)?.status ?? (error as any)?.statusCode;
+			const isRetryable =
+				(status && retryableCodes.includes(status)) ||
+				msg.includes("ECONNRESET") ||
+				msg.includes("ECONNREFUSED") ||
+				msg.includes("ETIMEDOUT") ||
+				msg.includes("fetch failed") ||
+				msg.includes("network") ||
+				msg.includes("socket hang up");
+
+			if (!isRetryable) throw error;
+
+			const delay = baseDelayMs * 2 ** attempt;
+			logger.warn(
+				`[retry] Attempt ${attempt + 1}/${maxRetries} failed (${status || msg.slice(0, 80)}), retrying in ${delay}ms`,
+			);
+			await new Promise((r) => setTimeout(r, delay));
+		}
+	}
+	throw new Error("unreachable");
+}
+
 function getKimiPath(): string {
 	if (existsSync(KIMI_PATH)) return KIMI_PATH;
 	return "kimi";
@@ -135,7 +179,7 @@ const kimiProvider: ModelProvider = {
 			});
 			await session.close();
 			return true;
-		} catch (error) {
+		} catch (error: unknown) {
 			logger.error("[kimi] Credential validation failed:", error);
 			return false;
 		}
@@ -205,30 +249,75 @@ class KimiClient implements ModelClient {
 			if (opts.systemPrompt)
 				promptText = `${opts.systemPrompt}\n\n${promptText}`;
 
-			const turn = session.prompt(promptText);
-
-			for await (const event of turn) {
-				if (event.type === "ContentPart" && event.payload?.type === "text") {
-					yield {
-						type: "assistant",
-						message: {
-							content: [{ type: "text", text: event.payload.text }],
-						},
-					};
-				} else if (event.type === "ToolUse") {
-					yield {
-						type: "assistant",
-						message: {
-							content: [{ type: "tool_use", name: event.payload?.name }],
-						},
-					};
+			const maxRetries = 3;
+			const baseDelayMs = 1000;
+			const retryableMsgs = [
+				"ECONNRESET",
+				"ECONNREFUSED",
+				"ETIMEDOUT",
+				"fetch failed",
+				"network",
+				"socket hang up",
+			];
+			let lastError: unknown;
+			let eventsYielded = false;
+			for (let attempt = 0; attempt <= maxRetries; attempt++) {
+				try {
+					const turn = session.prompt(promptText);
+					// NOTE: Mid-stream retry hazard — if session.prompt() yields partial
+					// events before throwing, the caller has already received those partial
+					// events and they cannot be un-sent. Retries here apply only to
+					// complete-failure scenarios (network errors before or during the stream).
+					// This is a known limitation of streaming retry.
+					for await (const event of turn) {
+						if (
+							event.type === "ContentPart" &&
+							event.payload?.type === "text"
+						) {
+							eventsYielded = true;
+							yield {
+								type: "assistant",
+								message: {
+									content: [{ type: "text", text: event.payload.text }],
+								},
+							};
+						} else if (event.type === "ToolUse") {
+							eventsYielded = true;
+							yield {
+								type: "assistant",
+								message: {
+									content: [{ type: "tool_use", name: event.payload?.name }],
+								},
+							};
+						}
+					}
+					await turn.result;
+					lastError = undefined;
+					break;
+				} catch (err: unknown) {
+					if (attempt === maxRetries) throw err;
+					// Do not retry if events were already yielded to the caller —
+					// partial output cannot be un-yielded and a retry would produce
+					// a duplicate/split response.
+					if (eventsYielded) throw err;
+					const msg = err instanceof Error ? err.message : String(err);
+					const status = (err as any)?.status ?? (err as any)?.statusCode;
+					const isRetryable =
+						[429, 503].includes(status) ||
+						retryableMsgs.some((s) => msg.includes(s));
+					if (!isRetryable) throw err;
+					const delay = baseDelayMs * 2 ** attempt;
+					logger.warn(
+						`[retry] Attempt ${attempt + 1}/${maxRetries} failed (${status || msg.slice(0, 80)}), retrying in ${delay}ms`,
+					);
+					await new Promise((r) => setTimeout(r, delay));
+					lastError = err;
 				}
 			}
-
-			await turn.result;
+			if (lastError) throw lastError;
 			yield { type: "result", subtype: "success", total_cost_usd: 0 };
 			await session.close();
-		} catch (error) {
+		} catch (error: unknown) {
 			logger.error("[kimi] Query failed:", error);
 			await session.close();
 			throw error;
@@ -242,13 +331,19 @@ class KimiClient implements ModelClient {
 	async healthCheck(): Promise<boolean> {
 		try {
 			const { createSession } = await loadSDK();
-			const session = createSession({
-				workDir: "/tmp",
-				executable: this.executable,
-			});
-			await session.close();
+			await retryWithBackoff(
+				async () => {
+					const session = createSession({
+						workDir: "/tmp",
+						executable: this.executable,
+					});
+					await session.close();
+				},
+				{ maxRetries: 3, baseDelayMs: 1000 },
+				logger,
+			);
 			return true;
-		} catch (error) {
+		} catch (error: unknown) {
 			logger.error("[kimi] Health check failed:", error);
 			return false;
 		}

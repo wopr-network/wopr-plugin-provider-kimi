@@ -36,12 +36,12 @@ describe("provider interface", () => {
 
     const ctx = {
       log: { info: vi.fn() },
-      registerProvider: vi.fn(),
+      registerLLMProvider: vi.fn(),
       registerConfigSchema: vi.fn(),
     };
 
     await plugin.init(ctx);
-    provider = ctx.registerProvider.mock.calls[0][0];
+    provider = ctx.registerLLMProvider.mock.calls[0][0];
   });
 
   describe("metadata", () => {
@@ -99,11 +99,11 @@ describe("provider interface", () => {
       const plugin = mod.default;
       const ctx = {
         log: { info: vi.fn() },
-        registerProvider: vi.fn(),
+        registerLLMProvider: vi.fn(),
         registerConfigSchema: vi.fn(),
       };
       await plugin.init(ctx);
-      const p = ctx.registerProvider.mock.calls[0][0];
+      const p = ctx.registerLLMProvider.mock.calls[0][0];
       const result = await p.validateCredentials("any-credential");
       expect(result).toBe(false);
       vi.doUnmock("@moonshot-ai/kimi-agent-sdk");
@@ -118,12 +118,12 @@ describe("A2A config conversion", () => {
 
     const ctx = {
       log: { info: vi.fn() },
-      registerProvider: vi.fn(),
+      registerLLMProvider: vi.fn(),
       registerConfigSchema: vi.fn(),
     };
 
     await plugin.init(ctx);
-    const provider = ctx.registerProvider.mock.calls[0][0];
+    const provider = ctx.registerLLMProvider.mock.calls[0][0];
 
     // Create client and verify it accepts options
     const client = await provider.createClient("credential", {
