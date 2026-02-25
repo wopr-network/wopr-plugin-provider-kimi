@@ -249,31 +249,60 @@ class KimiClient implements ModelClient {
 			if (opts.systemPrompt)
 				promptText = `${opts.systemPrompt}\n\n${promptText}`;
 
-			const turn = await retryWithBackoff(
-				async () => session.prompt(promptText),
-				{ maxRetries: 3, baseDelayMs: 1000 },
-				logger,
-			);
-
-			for await (const event of turn) {
-				if (event.type === "ContentPart" && event.payload?.type === "text") {
-					yield {
-						type: "assistant",
-						message: {
-							content: [{ type: "text", text: event.payload.text }],
-						},
-					};
-				} else if (event.type === "ToolUse") {
-					yield {
-						type: "assistant",
-						message: {
-							content: [{ type: "tool_use", name: event.payload?.name }],
-						},
-					};
+			const maxRetries = 3;
+			const baseDelayMs = 1000;
+			const retryableMsgs = [
+				"ECONNRESET",
+				"ECONNREFUSED",
+				"ETIMEDOUT",
+				"fetch failed",
+				"network",
+				"socket hang up",
+			];
+			let lastError: unknown;
+			for (let attempt = 0; attempt <= maxRetries; attempt++) {
+				try {
+					const turn = session.prompt(promptText);
+					for await (const event of turn) {
+						if (
+							event.type === "ContentPart" &&
+							event.payload?.type === "text"
+						) {
+							yield {
+								type: "assistant",
+								message: {
+									content: [{ type: "text", text: event.payload.text }],
+								},
+							};
+						} else if (event.type === "ToolUse") {
+							yield {
+								type: "assistant",
+								message: {
+									content: [{ type: "tool_use", name: event.payload?.name }],
+								},
+							};
+						}
+					}
+					await turn.result;
+					lastError = undefined;
+					break;
+				} catch (err: unknown) {
+					if (attempt === maxRetries) throw err;
+					const msg = err instanceof Error ? err.message : String(err);
+					const status = (err as any)?.status ?? (err as any)?.statusCode;
+					const isRetryable =
+						[429, 503].includes(status) ||
+						retryableMsgs.some((s) => msg.includes(s));
+					if (!isRetryable) throw err;
+					const delay = baseDelayMs * 2 ** attempt;
+					logger.warn(
+						`[retry] Attempt ${attempt + 1}/${maxRetries} failed (${status || msg.slice(0, 80)}), retrying in ${delay}ms`,
+					);
+					await new Promise((r) => setTimeout(r, delay));
+					lastError = err;
 				}
 			}
-
-			await turn.result;
+			if (lastError) throw lastError;
 			yield { type: "result", subtype: "success", total_cost_usd: 0 };
 			await session.close();
 		} catch (error) {
