@@ -179,7 +179,7 @@ const kimiProvider: ModelProvider = {
 			});
 			await session.close();
 			return true;
-		} catch (error) {
+		} catch (error: unknown) {
 			logger.error("[kimi] Credential validation failed:", error);
 			return false;
 		}
@@ -260,6 +260,7 @@ class KimiClient implements ModelClient {
 				"socket hang up",
 			];
 			let lastError: unknown;
+			let eventsYielded = false;
 			for (let attempt = 0; attempt <= maxRetries; attempt++) {
 				try {
 					const turn = session.prompt(promptText);
@@ -268,6 +269,7 @@ class KimiClient implements ModelClient {
 							event.type === "ContentPart" &&
 							event.payload?.type === "text"
 						) {
+							eventsYielded = true;
 							yield {
 								type: "assistant",
 								message: {
@@ -275,6 +277,7 @@ class KimiClient implements ModelClient {
 								},
 							};
 						} else if (event.type === "ToolUse") {
+							eventsYielded = true;
 							yield {
 								type: "assistant",
 								message: {
@@ -288,6 +291,10 @@ class KimiClient implements ModelClient {
 					break;
 				} catch (err: unknown) {
 					if (attempt === maxRetries) throw err;
+					// Do not retry if events were already yielded to the caller —
+					// partial output cannot be un-yielded and a retry would produce
+					// a duplicate/split response.
+					if (eventsYielded) throw err;
 					const msg = err instanceof Error ? err.message : String(err);
 					const status = (err as any)?.status ?? (err as any)?.statusCode;
 					const isRetryable =
@@ -305,7 +312,7 @@ class KimiClient implements ModelClient {
 			if (lastError) throw lastError;
 			yield { type: "result", subtype: "success", total_cost_usd: 0 };
 			await session.close();
-		} catch (error) {
+		} catch (error: unknown) {
 			logger.error("[kimi] Query failed:", error);
 			await session.close();
 			throw error;
@@ -331,7 +338,7 @@ class KimiClient implements ModelClient {
 				logger,
 			);
 			return true;
-		} catch (error) {
+		} catch (error: unknown) {
 			logger.error("[kimi] Health check failed:", error);
 			return false;
 		}

@@ -48,16 +48,16 @@ describe("plugin smoke test", () => {
     expect(typeof plugin.shutdown).toBe("function");
   });
 
-  it("init calls registerProvider and registerConfigSchema", async () => {
+  it("init calls registerLLMProvider and registerConfigSchema", async () => {
     const ctx = {
       log: { info: vi.fn() },
-      registerProvider: vi.fn(),
+      registerLLMProvider: vi.fn(),
       registerConfigSchema: vi.fn(),
     };
 
     await plugin.init(ctx);
 
-    expect(ctx.registerProvider).toHaveBeenCalledTimes(1);
+    expect(ctx.registerLLMProvider).toHaveBeenCalledTimes(1);
     expect(ctx.registerConfigSchema).toHaveBeenCalledTimes(1);
     expect(ctx.log.info).toHaveBeenCalled();
   });
@@ -65,13 +65,13 @@ describe("plugin smoke test", () => {
   it("init registers provider with id 'kimi'", async () => {
     const ctx = {
       log: { info: vi.fn() },
-      registerProvider: vi.fn(),
+      registerLLMProvider: vi.fn(),
       registerConfigSchema: vi.fn(),
     };
 
     await plugin.init(ctx);
 
-    const provider = ctx.registerProvider.mock.calls[0][0];
+    const provider = ctx.registerLLMProvider.mock.calls[0][0];
     expect(provider.id).toBe("kimi");
     expect(provider.name).toBe("Kimi");
   });
