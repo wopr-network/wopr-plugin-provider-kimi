@@ -68,6 +68,50 @@ const logger = winston.createLogger({
 
 const KIMI_PATH = join(homedir(), ".local/share/uv/tools/kimi-cli/bin/kimi");
 
+interface RetryOptions {
+	maxRetries?: number;
+	baseDelayMs?: number;
+	retryableStatusCodes?: number[];
+}
+
+export async function retryWithBackoff<T>(
+	fn: () => Promise<T>,
+	opts: RetryOptions = {},
+	logger: { warn: (msg: string) => void },
+): Promise<T> {
+	const maxRetries = opts.maxRetries ?? 3;
+	const baseDelayMs = opts.baseDelayMs ?? 1000;
+	const retryableCodes = opts.retryableStatusCodes ?? [429, 503];
+
+	for (let attempt = 0; attempt <= maxRetries; attempt++) {
+		try {
+			return await fn();
+		} catch (error: unknown) {
+			if (attempt === maxRetries) throw error;
+
+			const msg = error instanceof Error ? error.message : String(error);
+			const status = (error as any)?.status ?? (error as any)?.statusCode;
+			const isRetryable =
+				(status && retryableCodes.includes(status)) ||
+				msg.includes("ECONNRESET") ||
+				msg.includes("ECONNREFUSED") ||
+				msg.includes("ETIMEDOUT") ||
+				msg.includes("fetch failed") ||
+				msg.includes("network") ||
+				msg.includes("socket hang up");
+
+			if (!isRetryable) throw error;
+
+			const delay = baseDelayMs * 2 ** attempt;
+			logger.warn(
+				`[retry] Attempt ${attempt + 1}/${maxRetries} failed (${status || msg.slice(0, 80)}), retrying in ${delay}ms`,
+			);
+			await new Promise((r) => setTimeout(r, delay));
+		}
+	}
+	throw new Error("unreachable");
+}
+
 function getKimiPath(): string {
 	if (existsSync(KIMI_PATH)) return KIMI_PATH;
 	return "kimi";
@@ -205,7 +249,11 @@ class KimiClient implements ModelClient {
 			if (opts.systemPrompt)
 				promptText = `${opts.systemPrompt}\n\n${promptText}`;
 
-			const turn = session.prompt(promptText);
+			const turn = await retryWithBackoff(
+				async () => session.prompt(promptText),
+				{ maxRetries: 3, baseDelayMs: 1000 },
+				logger,
+			);
 
 			for await (const event of turn) {
 				if (event.type === "ContentPart" && event.payload?.type === "text") {
@@ -242,11 +290,17 @@ class KimiClient implements ModelClient {
 	async healthCheck(): Promise<boolean> {
 		try {
 			const { createSession } = await loadSDK();
-			const session = createSession({
-				workDir: "/tmp",
-				executable: this.executable,
-			});
-			await session.close();
+			await retryWithBackoff(
+				async () => {
+					const session = createSession({
+						workDir: "/tmp",
+						executable: this.executable,
+					});
+					await session.close();
+				},
+				{ maxRetries: 3, baseDelayMs: 1000 },
+				logger,
+			);
 			return true;
 		} catch (error) {
 			logger.error("[kimi] Health check failed:", error);
