@@ -32,7 +32,7 @@ describe("plugin smoke test", () => {
   let plugin: any;
 
   beforeEach(async () => {
-    const mod = await import("../index.js");
+    const mod = await import("../src/index.js");
     plugin = mod.default;
   });
 

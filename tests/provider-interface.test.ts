@@ -31,7 +31,7 @@ describe("provider interface", () => {
   let provider: any;
 
   beforeEach(async () => {
-    const mod = await import("../index.js");
+    const mod = await import("../src/index.js");
     const plugin = mod.default;
 
     const ctx = {
@@ -95,7 +95,7 @@ describe("provider interface", () => {
         throw new Error("Cannot find module");
       });
       // Re-import to pick up the mock
-      const mod = await import("../index.js");
+      const mod = await import("../src/index.js");
       const plugin = mod.default;
       const ctx = {
         log: { info: vi.fn() },
@@ -113,7 +113,7 @@ describe("provider interface", () => {
 
 describe("A2A config conversion", () => {
   it("plugin registers provider that accepts a2aServers in query options", async () => {
-    const mod = await import("../index.js");
+    const mod = await import("../src/index.js");
     const plugin = mod.default;
 
     const ctx = {
