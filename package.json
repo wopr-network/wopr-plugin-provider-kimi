@@ -22,16 +22,14 @@
   ],
   "license": "MIT",
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "name": "@wopr-network/wopr-plugin-provider-kimi",
-  "peerDependencies": {
-    "wopr": "^0.0.1"
-  },
   "scripts": {
     "build": "tsc",
-    "check": "biome check index.ts logger.ts && tsc --noEmit",
-    "format": "biome format --write index.ts logger.ts",
-    "lint": "biome check index.ts logger.ts",
-    "lint:fix": "biome check --fix index.ts logger.ts",
+    "check": "biome check --config-path=. src/ && tsc --noEmit",
+    "format": "biome format --config-path=. --write src/",
+    "lint": "biome check --config-path=. src/",
+    "lint:fix": "biome check --config-path=. --fix src/",
     "postinstall": "node install-deps.mjs",
     "prepublishOnly": "npm run build",
     "test": "vitest run"

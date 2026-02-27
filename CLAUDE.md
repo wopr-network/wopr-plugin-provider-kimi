@@ -6,8 +6,8 @@ Kimi (Moonshot AI) provider plugin for WOPR. Auto-installs Python dependencies a
 
 ```bash
 npm run build     # tsc
-npm run check     # biome check index.ts logger.ts + tsc --noEmit (run before committing)
-npm run format    # biome format --write index.ts logger.ts
+npm run check     # biome check src/ + tsc --noEmit (run before committing)
+npm run format    # biome format --write src/
 npm test          # vitest run
 ```
 

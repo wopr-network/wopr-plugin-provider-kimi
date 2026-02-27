@@ -31,7 +31,7 @@ describe("config validation", () => {
   let configSchema: any;
 
   beforeEach(async () => {
-    const mod = await import("../index.js");
+    const mod = await import("../src/index.js");
     const plugin = mod.default;
 
     const ctx = {

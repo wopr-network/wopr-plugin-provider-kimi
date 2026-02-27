@@ -45,7 +45,7 @@ describe("provider-kimi extension (WOP-268)", () => {
 	});
 
 	it("calls ctx.registerExtension with 'provider-kimi' during init", async () => {
-		const { default: plugin } = await import("../index.js");
+		const { default: plugin } = await import("../src/index.js");
 
 		const registerExtension = vi.fn();
 		const ctx = {
@@ -64,7 +64,7 @@ describe("provider-kimi extension (WOP-268)", () => {
 	});
 
 	it("does not throw when ctx.registerExtension is absent", async () => {
-		const { default: plugin } = await import("../index.js");
+		const { default: plugin } = await import("../src/index.js");
 
 		const ctx = {
 			log: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
@@ -77,7 +77,7 @@ describe("provider-kimi extension (WOP-268)", () => {
 	});
 
 	it("extension.getModelInfo returns Kimi K2 model info", async () => {
-		const { default: plugin } = await import("../index.js");
+		const { default: plugin } = await import("../src/index.js");
 
 		let capturedExtension: any;
 		const ctx = {
@@ -101,7 +101,7 @@ describe("provider-kimi extension (WOP-268)", () => {
 	});
 
 	it("model info includes required display fields", async () => {
-		const { default: plugin } = await import("../index.js");
+		const { default: plugin } = await import("../src/index.js");
 
 		let capturedExtension: any;
 		const ctx = {
