@@ -50,7 +50,7 @@ describe("provider-kimi extension (WOP-268)", () => {
 		const registerExtension = vi.fn();
 		const ctx = {
 			log: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
-			registerLLMProvider: vi.fn(),
+			registerProvider: vi.fn(),
 			registerConfigSchema: vi.fn(),
 			registerExtension,
 		};
@@ -68,7 +68,7 @@ describe("provider-kimi extension (WOP-268)", () => {
 
 		const ctx = {
 			log: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
-			registerLLMProvider: vi.fn(),
+			registerProvider: vi.fn(),
 			registerConfigSchema: vi.fn(),
 			// No registerExtension
 		};
@@ -82,7 +82,7 @@ describe("provider-kimi extension (WOP-268)", () => {
 		let capturedExtension: any;
 		const ctx = {
 			log: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
-			registerLLMProvider: vi.fn(),
+			registerProvider: vi.fn(),
 			registerConfigSchema: vi.fn(),
 			registerExtension: vi.fn((_name: string, ext: unknown) => {
 				capturedExtension = ext;
@@ -106,7 +106,7 @@ describe("provider-kimi extension (WOP-268)", () => {
 		let capturedExtension: any;
 		const ctx = {
 			log: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
-			registerLLMProvider: vi.fn(),
+			registerProvider: vi.fn(),
 			registerConfigSchema: vi.fn(),
 			registerExtension: vi.fn((_name: string, ext: unknown) => {
 				capturedExtension = ext;

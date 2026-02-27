@@ -376,6 +376,8 @@ const manifest: PluginManifest = {
 /**
  * Plugin export
  */
+let pluginCtx: WOPRPluginContext | null = null;
+
 const plugin: WOPRPlugin = {
   name: "provider-kimi",
   version: "1.6.0",
@@ -383,6 +385,7 @@ const plugin: WOPRPlugin = {
   manifest,
 
   async init(ctx: WOPRPluginContext) {
+    pluginCtx = ctx;
     ctx.log.info("Registering Kimi provider (OAuth)...");
     ctx.registerProvider(kimiProvider);
     ctx.log.info("Kimi provider registered (supports session resumption, yoloMode, A2A/MCP)");
@@ -402,6 +405,9 @@ const plugin: WOPRPlugin = {
 
   async shutdown() {
     logger.info("[provider-kimi] Shutting down");
+    pluginCtx?.unregisterExtension?.("provider-kimi");
+    pluginCtx?.unregisterConfigSchema?.("provider-kimi");
+    pluginCtx = null;
   },
 };
 
