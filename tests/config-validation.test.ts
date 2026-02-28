@@ -36,8 +36,10 @@ describe("config validation", () => {
 
     const ctx = {
       log: { info: vi.fn() },
-      registerLLMProvider: vi.fn(),
+      registerProvider: vi.fn(),
       registerConfigSchema: vi.fn(),
+      unregisterExtension: vi.fn(),
+      unregisterConfigSchema: vi.fn(),
     };
 
     await plugin.init(ctx);
