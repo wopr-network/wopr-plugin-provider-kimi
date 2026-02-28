@@ -384,7 +384,7 @@ const plugin: WOPRPlugin = {
 
   async init(ctx: WOPRPluginContext) {
     ctx.log.info("Registering Kimi provider (OAuth)...");
-    ctx.registerLLMProvider(kimiProvider);
+    ctx.registerProvider(kimiProvider);
     ctx.log.info("Kimi provider registered (supports session resumption, yoloMode, A2A/MCP)");
 
     // Register extension for daemon model endpoint enrichment (WOP-268)
