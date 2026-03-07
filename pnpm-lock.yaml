@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@moonshot-ai/kimi-agent-sdk':
-        specifier: ^0.1.4
-        version: 0.1.4(zod@3.25.76)
+        specifier: ^0.1.5
+        version: 0.1.5(zod@3.25.76)
       '@wopr-network/plugin-types':
         specifier: ^0.9.0
         version: 0.9.0(zod@3.25.76)
@@ -252,8 +252,8 @@ packages:
   '@jridgewell/sourcemap-codec@1.5.5':
     resolution: {integrity: sha512-cYQ9310grqxueWbl+WuIUIaiUaDcj7WOq5fVhEljNVgRfOUhY9fy2zTvfoqWsnebh8Sl70VScFbICvJnLKB0Og==}
 
-  '@moonshot-ai/kimi-agent-sdk@0.1.4':
-    resolution: {integrity: sha512-5eZB9lkarnR6oB8D6smqmoaAdz8I0Hi78BCDm8cgRwxKEBG3nx2POUv42bj7CiB3cyxTCf8rzbGSWEhJGjGcKg==}
+  '@moonshot-ai/kimi-agent-sdk@0.1.5':
+    resolution: {integrity: sha512-8I4u9v0JyTnDz+uZsCb8hwbZkJko85ZfnE5ScG9ztXiPb6O6rPSD4QCyRuckJbA5Bh7CmQMUCg/es52rpHbsFw==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
       zod: ^3.24.0 || ^4.0.0
@@ -848,7 +848,7 @@ snapshots:
 
   '@jridgewell/sourcemap-codec@1.5.5': {}
 
-  '@moonshot-ai/kimi-agent-sdk@0.1.4(zod@3.25.76)':
+  '@moonshot-ai/kimi-agent-sdk@0.1.5(zod@3.25.76)':
     dependencies:
       debug: 4.4.3
       toml: 3.0.0
