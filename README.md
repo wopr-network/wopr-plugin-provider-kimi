@@ -1,3 +1,11 @@
+# ⚠️ This package has moved
+
+This package is now maintained in the [wopr-plugins monorepo](https://github.com/wopr-network/wopr-plugins/tree/main/packages/plugin-provider-kimi).
+
+This repository is archived and no longer accepts contributions.
+
+---
+
 # 🌙 wopr-plugin-provider-kimi
 
 [![npm version](https://img.shields.io/npm/v/wopr-plugin-provider-kimi.svg)](https://www.npmjs.com/package/wopr-plugin-provider-kimi)
